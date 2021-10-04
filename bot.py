@@ -20,6 +20,7 @@ channel_id = int(os.getenv('channel_id'))
 goat_id = int(os.getenv('goat_id'))
 
 
+
 special_chars = ['_', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 link_chars = '[]()'
 
