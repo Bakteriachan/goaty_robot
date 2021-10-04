@@ -250,6 +250,10 @@ def remove(update,context):
         return
 
     caption = update.message['text'][7:].strip()
+    if len(caption) == 0:
+        sendMessage(update,context,f'Formato incorrecto')
+        return
+        
     items = [int(i) for i in caption.split(' ')]
     for i in items:
         remove_element(i)
@@ -267,5 +271,6 @@ dp.add_handler(CommandHandler("add",add))
 dp.add_handler(CommandHandler('remove',remove))
 dp.add_handler(MessageHandler(Filters.text,recv_msg))
 
-updater.start_polling()
-updater.idle()
+heroku_app_name = os.getenv("HEROKU_APP_NAME")
+PORT = int(os.environ.get("PORT","8443"))
+updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN,webhook_url=f"https://{heroku_app_name}.herokuapp.com/{TOKEN}")
