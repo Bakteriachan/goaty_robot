@@ -177,10 +177,10 @@ def remove_unprocessed():
 
 def validate_post(update):
     print(update.channel_post['sender_chat']['id'])
-    return update.channel_post['sender_chat']['id'] == goat_id
+    return int(update.channel_post['sender_chat']['id']) == goat_id
 
 def validate_command(update):
-    return update.message['chat']['id'] == goat_id
+    return int(update.message['chat']['id']) == goat_id
 
 #################################
 #                               #
