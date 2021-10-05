@@ -176,7 +176,7 @@ def remove_unprocessed():
     arc.close()
 
 def validate_post(update):
-    print(update.channel_post['sender_chat']['id'])
+    print(update.channel_post['sender_chat']['id'],goat_id)
     return int(update.channel_post['sender_chat']['id']) == goat_id
 
 def validate_command(update):
