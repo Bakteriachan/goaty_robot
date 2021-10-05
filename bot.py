@@ -188,7 +188,7 @@ def validate_command(update):
 #################################
 def recv_msg(update,context):
     if update.channel_post is not None:
-        if validate_post():
+        if validate_post(update):
             add_unproc_post(update)
 
 #builds resume
