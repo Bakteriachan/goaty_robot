@@ -176,11 +176,10 @@ def remove_unprocessed():
     arc.close()
 
 def validate_post(update):
-    print(update.channel_post['sender_chat']['id'],goat_id)
     return int(update.channel_post['sender_chat']['id']) == goat_id
 
 def validate_command(update):
-    return int(update.message['chat']['id']) == goat_id
+    return int(update.message['chat']['id']) == channel_id
 
 #################################
 #                               #
@@ -189,7 +188,6 @@ def validate_command(update):
 #################################
 def recv_msg(update,context):
     if update.channel_post is not None:
-        print(validate_post(update))
         if validate_post(update):
             add_unproc_post(update)
 
