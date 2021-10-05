@@ -176,10 +176,10 @@ def remove_unprocessed():
     arc.close()
 
 def validate_post(update):
-    return int(update.channel_post['sender_chat']['id']) == goat_id
+    return int(update.channel_post['sender_chat']['id']) == channel_id
 
 def validate_command(update):
-    return int(update.message['chat']['id']) == channel_id
+    return int(update.message['chat']['id']) == goat_id
 
 #################################
 #                               #
