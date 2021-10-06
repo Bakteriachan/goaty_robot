@@ -78,7 +78,7 @@ def get_past_link():
         return (int(number),link)
         arc.close()
     except:
-        return (14,'https://t.me/unCanalWe/56')
+        return (14,'https://t.me/GoatsStuffs/1652')
     return None
 
 def save_link(curr_num,link):
