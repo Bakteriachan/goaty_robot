@@ -126,7 +126,7 @@ def get_past_link():
 #saves link of resume sent
 def save_link(curr_num,link):
     try:
-        arc = download_file(f"goaty_robot/{past}")
+        arc = download_file(f"goaty_robot/{past}",'w')
         arc.write(str(curr_num))
         arc.write('\n')
         arc.write(link)
