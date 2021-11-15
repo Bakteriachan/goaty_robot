@@ -344,6 +344,30 @@ def plus(update,context):
         if i == '[':
             isIn[1] = True
     add_unproc_post(link=link,name=name)
+    
+def edit_past_link(update,context):
+    '''
+    el comando se usa de la siguiente manera:
+    /pastlink (*numero_de_resumen_actual*)[*link_del_anterior_resumen*]
+    '''
+    caption = update.message['text'][9:].strip()
+    isIn = [False,False]
+    number,link = "",""
+    for i in caption:
+        if i == ']':
+            isIn[1] = False
+        if i == ')':
+            isIn[0] = False
+        if isIn[0]:
+            number += 1
+        if isIn[1]:
+            link += i
+        if i == '(':
+            isIn[0] = True
+        if i == '[':
+            isIn[1] = True    
+    number = int(number)
+    save_link(number-1,link)
 
 if __name__ == '__main__':
     my_bot = telegram.Bot(token = TOKEN)
@@ -357,6 +381,7 @@ dp.add_handler(CommandHandler("show",show))#show current resume
 dp.add_handler(CommandHandler("add",add))#adds element to resume
 dp.add_handler(CommandHandler('remove',remove))#remove element from resume
 dp.add_handler(CommandHandler('plus',plus))#adds element manualy
+dp.add_handler(CommandHandler('pastlink',edit_past_link))# edit last resume link stuff
 dp.add_handler(MessageHandler(Filters.text,recv_msg))
 dp.add_handler(MessageHandler(Filters.photo,recv_msg))
 
