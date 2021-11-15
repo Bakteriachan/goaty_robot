@@ -109,7 +109,7 @@ def sendMessageById(Id,context,text):
 #returns link of last resume
 def get_past_link():
     try:
-        arc = download_file(past)
+        arc = download_file(f"goaty_robot/{past},'r')
         number = arc.readline()
         if number[-1] == '\n':
             number = number[:-1]
