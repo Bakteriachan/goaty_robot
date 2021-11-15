@@ -359,7 +359,7 @@ def edit_past_link(update,context):
         if i == ')':
             isIn[0] = False
         if isIn[0]:
-            number += 1
+            number += i
         if isIn[1]:
             link += i
         if i == '(':
