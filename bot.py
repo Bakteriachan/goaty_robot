@@ -196,7 +196,7 @@ def add_unproc_post(update=None,link=None,name=None):
     if update == None:
         return
     message_id = update.channel_post['message_id']
-    channel_name = update.channel_post['sender_chat']['username']
+    channel_name = update.channel_post['sender_chat']['username'] or update.channel_post['sender_chat']['title'] or update.channel_post['chat']['title']  
     Link = f'https://t.me/{channel_name}/{message_id}'
     caption = update.channel_post['text']
     if caption == None:
