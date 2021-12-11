@@ -206,14 +206,14 @@ def add_unproc_post(update=None,link=None,name=None):
         if i == '\n':
             break
         element_name += i
-    arc = download_file(f"goaty_robot/{unprocessed}")
+    arc = download_file(f"htdocs/goaty_robot/{unprocessed}")
     arc.write(f'[{element_name}]({Link})\n')
     arc.close()
     upload_file(f"goaty_robot/{unprocessed}",unprocessed)
 
 #get unprocessed posts from file
 def get_unproc_post():
-    arc = download_file(f"goaty_robot/{unprocessed}",open_type='r')
+    arc = download_file(f"htdocs/goaty_robot/{unprocessed}",open_type='r')
     ans = ''
 
     cnt = 1
@@ -221,14 +221,14 @@ def get_unproc_post():
         ans += str(cnt) + '- ' + line
         cnt += 1
     arc.close()
-    upload_file(f"goaty_robot/{unprocessed}",unprocessed)
+    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
     return ans
 
 #deletes not used posts
 def remove_unprocessed():
     arc = open(unprocessed,'w')
     arc.close()
-    upload_file(f"goaty_robot/{unprocessed}",unprocessed)
+    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
 
 #if post is from goat's channel
 def validate_post(update):
