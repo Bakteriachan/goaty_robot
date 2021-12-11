@@ -109,7 +109,7 @@ def sendMessageById(Id,context,text):
 #returns link of last resume
 def get_past_link():
     try:
-        arc = download_file(f"goaty_robot/{past}",'r')
+        arc = download_file(f"htdocs/goaty_robot/{past}",'r')
         number = arc.readline()
         if number[-1] == '\n':
             number = number[:-1]
@@ -118,7 +118,7 @@ def get_past_link():
             link = link[:-1]
         return (int(number),link)
         arc.close()
-        upload_file(f"goaty_robot/{past}",past)
+        upload_file(f"htdocs/goaty_robot/{past}",past)
     except:
         return (14,'https://t.me/unCanalWe/56')
     return None
@@ -126,13 +126,13 @@ def get_past_link():
 #saves link of resume sent
 def save_link(curr_num,link):
     try:
-        arc = download_file(f"goaty_robot/{past}",'w')
+        arc = download_file(f"htdocs/goaty_robot/{past}",'w')
         arc.write(str(curr_num))
         arc.write('\n')
         arc.write(link)
         arc.write('\n')
         arc.close()
-        upload_file(f"goaty_robot/{past}",past)
+        upload_file(f"htdocs/goaty_robot/{past}",past)
     except:
         return False
     return True
@@ -141,29 +141,29 @@ def save_link(curr_num,link):
 def build_resume_text(delete=False):
     num,pastLink = get_past_link()
     ans = f'「Rezumen {num+1}」\n\n•*[Rezumen {num}]({pastLink})*\n\n'
-    arc = download_file(f"goaty_robot/{resume}",open_type="r")
+    arc = download_file(f"htdocs/goaty_robot/{resume}",open_type="r")
     for line in arc:
         ans += '• *' + line + '*\n'
     arc.close()
-    upload_file(f"goaty_robot/{resume}",resume)
+    upload_file(f"htdocs/goaty_robot/{resume}",resume)
     ans += 'ⓘ • ~`Uza el~` #rezumen ~`para navegar mejor por todo el kontenido del Kanal.~`'
     if delete:
         arc = open(resume,'w')
         arc.close()
-        upload_file(f"goaty_robot/{resume}",resume)
+        upload_file(f"htdocs/goaty_robot/{resume}",resume)
     return ans
 
 
 #add element to resume
 def add_element(element):
-    arc = download_file(f"goaty_robot/{resume}")
+    arc = download_file(f"htdocs/goaty_robot/{resume}")
     arc.write(element)
     arc.close()
-    upload_file(f"goaty_robot/{resume}",resume)
+    upload_file(f"htdocs/goaty_robot/{resume}",resume)
 
 #removes element from resume
 def remove_element(element_idx):
-    arc = download_file(f"goaty_robot/{resume}")
+    arc = download_file(f"htdocs/goaty_robot/{resume}")
 
     cnt = 1
     ans = ''
@@ -175,7 +175,7 @@ def remove_element(element_idx):
     arc.close()
     arc = open(resume,'w')
     arc.close()
-    upload_file(f"goaty_robot/{resume}",resume)
+    upload_file(f"htdocs/goaty_robot/{resume}",resume)
     add_element(ans)
 
 #sends resume to channel
@@ -189,10 +189,10 @@ def add_unproc_post(update=None,link=None,name=None):
     if name==None and link == None and update == None:
         return
     if update == None and link is not None and name is not None: #adding element entered manualy
-        arc = download_file(f"goaty_robot/{unprocessed}")
+        arc = download_file(f"htdocs/goaty_robot/{unprocessed}")
         arc.write(f'[{name}]({link})\n')
         arc.close()
-        upload_file(f"goaty_robot/{unprocessed}",unprocessed)
+        upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
     if update == None:
         return
     message_id = update.channel_post['message_id']
@@ -206,14 +206,14 @@ def add_unproc_post(update=None,link=None,name=None):
         if i == '\n':
             break
         element_name += i
-    arc = download_file(f"htdocs/goaty_robot/{unprocessed}")
+    arc = download_file(f"htdocs/htdocs/goaty_robot/{unprocessed}")
     arc.write(f'[{element_name}]({Link})\n')
     arc.close()
-    upload_file(f"goaty_robot/{unprocessed}",unprocessed)
+    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
 
 #get unprocessed posts from file
 def get_unproc_post():
-    arc = download_file(f"htdocs/goaty_robot/{unprocessed}",open_type='r')
+    arc = download_file(f"htdocs/htdocs/goaty_robot/{unprocessed}",open_type='r')
     ans = ''
 
     cnt = 1
@@ -221,14 +221,14 @@ def get_unproc_post():
         ans += str(cnt) + '- ' + line
         cnt += 1
     arc.close()
-    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
+    upload_file(f"htdocs/htdocs/goaty_robot/{unprocessed}",unprocessed)
     return ans
 
 #deletes not used posts
 def remove_unprocessed():
     arc = open(unprocessed,'w')
     arc.close()
-    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
+    upload_file(f"htdocs/htdocs/goaty_robot/{unprocessed}",unprocessed)
 
 #if post is from goat's channel
 def validate_post(update):
