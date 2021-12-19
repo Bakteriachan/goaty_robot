@@ -238,6 +238,7 @@ def validate_post(update):
 
 #if command is goat's
 def validate_command(update):
+    print(goat_id)
     return update.message['chat']['id'] in goat_id
 
 #################################
