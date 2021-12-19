@@ -1,3 +1,5 @@
+#Stuff to be Done: add regex 
+
 import logging
 import os,re,ftplib
 import telegram
@@ -17,7 +19,7 @@ unprocessed = os.getenv('unprocessed')
 resume = os.getenv('resume')
 past = os.getenv('past')
 channel_id = int(os.getenv('channel_id'))
-goat_id = int(os.getenv('goat_id'))
+goat_id = list(map(int,os.getenv('goat_id')))
 #FTP variables
 host = os.getenv('host')
 username = os.getenv('username')
@@ -180,6 +182,7 @@ def remove_element(element_idx):
 #sends resume to channel
 def send_resume(update,context,text):
     return sendMessageById(channel_id,context,text)
+ 
 
 #add unprocessed post element to file
 def add_unproc_post(update=None,link=None,name=None):
@@ -235,7 +238,7 @@ def validate_post(update):
 
 #if command is goat's
 def validate_command(update):
-    return update.message['chat']['id'] == goat_id
+    return update.message['chat']['id'] in goat_id
 
 #################################
 #                               #
@@ -343,7 +346,10 @@ def plus(update,context):
             isIn[0] = True
         if i == '[':
             isIn[1] = True
+    
     add_unproc_post(link=link,name=name)
+    sendMessage(update,constext,"Elemento añadido a la lista de Posts disponibles")
+    
     
 def edit_past_link(update,context):
     '''
