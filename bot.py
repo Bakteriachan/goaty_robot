@@ -349,7 +349,7 @@ def plus(update,context):
             isIn[1] = True
     
     add_unproc_post(link=link,name=name)
-    sendMessage(update,constext,"Elemento añadido a la lista de Posts disponibles")
+    sendMessage(update,context,"Elemento añadido a la lista de Posts disponibles")
     
     
 def edit_past_link(update,context):
