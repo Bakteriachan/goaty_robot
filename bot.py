@@ -19,7 +19,7 @@ unprocessed = os.getenv('unprocessed')
 resume = os.getenv('resume')
 past = os.getenv('past')
 channel_id = int(os.getenv('channel_id'))
-goat_id = list(map(int,os.getenv('goat_id')))
+goat_id = list(map(int,os.getenv('goat_id').split()))
 #FTP variables
 host = os.getenv('host')
 username = os.getenv('username')
