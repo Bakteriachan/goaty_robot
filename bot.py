@@ -71,6 +71,7 @@ def parse_text(text):
         if i in special_chars:
             ans += '\\'
         ans += i
+    return ans
 link_chars = '[]()'
 
 def fix(String:str) -> str:
