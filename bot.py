@@ -64,6 +64,13 @@ def download_file(filename,open_type='a'):
 
 #some telegram special chars
 special_chars = ['_', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+
+def parse_text(text):
+    ans = ''
+    for i in text:
+        if i in special_chars:
+            ans += '\\'
+        ans += i
 link_chars = '[]()'
 
 def fix(String:str) -> str:
@@ -144,7 +151,7 @@ def build_resume_text(delete=False):
     ans = f'「Rezumen {num+1}」\n\n•*[Rezumen {num}]({pastLink})*\n\n'
     arc = download_file(f"htdocs/goaty_robot/{resume}",open_type="r")
     for line in arc:
-        ans += '• *' + line + '*\n'
+        ans += '• *' + parse_text(line) + '*\n'
     arc.close()
     upload_file(f"htdocs/goaty_robot/{resume}",resume)
     ans += 'ⓘ • ~`Uza el~` #rezumen ~`para navegar mejor por todo el kontenido del Kanal.~`'
@@ -170,6 +177,7 @@ def remove_element(element_idx):
     ans = ''
     for line in arc:
         if cnt == element_idx:
+            cnt+=1
             continue
         cnt += 1
         ans += line
@@ -220,10 +228,9 @@ def get_unproc_post():
 
     cnt = 1
     for line in arc:
-        ans += str(cnt) + '- ' + line
+        ans += str(cnt) + '- ' + parse_text(line)
         cnt += 1
     arc.close()
-    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
     return ans
 
 #deletes not used posts
