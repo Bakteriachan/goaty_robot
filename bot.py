@@ -72,9 +72,24 @@ def parse_text(text):
             ans += '\\'
         ans += i
     return ans
+
+
+def parse_link(text):
+    re_exp = r'\[(.*)\](\(https://[a-zA-Z0-9/.]+\))'
+    match = re.match(re_exp,text)
+    if match is None:
+        raise Exception
+    print(f'[{parse_text(match.group(1))}]{match.group(2)}')
+    return f'[{parse_text(match.group(1))}]{match.group(2)}'
+
+
+
 link_chars = '[]()'
 
+
+#idk what i did here ToT
 def fix(String:str) -> str:
+    return String
     ans = ''
     ant = ''
     flag = False
@@ -110,10 +125,10 @@ def fix(String:str) -> str:
 
 def sendMessage(update,context,text):
     chatId = update.message['chat']['id']
-    return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = fix(text),disable_web_page_preview=True)
+    return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
 
 def sendMessageById(Id,context,text):
-    return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = fix(text),disable_web_page_preview =True)
+    return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
 
 #returns link of last resume
 def get_past_link():
@@ -132,7 +147,7 @@ def get_past_link():
         return (14,'https://t.me/unCanalWe/56')
     return None
 
-#saves link of resume sent
+#saves link of sent resume
 def save_link(curr_num,link):
     try:
         arc = download_file(f"htdocs/goaty_robot/{past}",'w')
@@ -149,13 +164,13 @@ def save_link(curr_num,link):
 #builds resume text
 def build_resume_text(delete=False):
     num,pastLink = get_past_link()
-    ans = f'「Rezumen {num+1}」\n\n•*[Rezumen {num}]({pastLink})*\n\n'
+    ans = f'「Rezumen {parse_text(str(num+1))}」\n\n•*[Rezumen {parse_text(str(num))}]({pastLink})*\n\n'
     arc = download_file(f"htdocs/goaty_robot/{resume}",open_type="r")
     for line in arc:
-        ans += '• *' + parse_text(line) + '*\n'
+        ans += '• *' + parse_link(line) + '*\n'
     arc.close()
     upload_file(f"htdocs/goaty_robot/{resume}",resume)
-    ans += 'ⓘ • ~`Uza el~` #rezumen ~`para navegar mejor por todo el kontenido del Kanal.~`'
+    ans += 'ⓘ • `Uza el` #rezumen `para navegar mejor por todo el kontenido del Kanal\\.`'
     if delete:
         arc = open(resume,'w')
         arc.close()
@@ -229,7 +244,7 @@ def get_unproc_post():
 
     cnt = 1
     for line in arc:
-        ans += str(cnt) + '- ' + parse_text(line)
+        ans += parse_text(str(cnt)) + '\\- ' + parse_text(line)
         cnt += 1
     arc.close()
     return ans
@@ -400,7 +415,5 @@ dp.add_handler(CommandHandler('pastlink',edit_past_link))# edit last resume link
 dp.add_handler(MessageHandler(Filters.text,recv_msg))
 dp.add_handler(MessageHandler(Filters.photo,recv_msg))
 
-
-heroku_app_name = os.getenv("HEROKU_APP_NAME")
-PORT = int(os.environ.get("PORT","8443"))
-updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN,webhook_url=f"https://{heroku_app_name}.herokuapp.com/{TOKEN}")
+updater.start_polling()
+updater.idle()
