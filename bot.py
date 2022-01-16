@@ -170,7 +170,7 @@ def build_resume_text(delete=False):
         ans += '• *' + parse_link(line) + '*\n'
     arc.close()
     upload_file(f"htdocs/goaty_robot/{resume}",resume)
-    ans += 'ⓘ • `Uza el` #rezumen `para navegar mejor por todo el kontenido del Kanal\\.`'
+    ans += 'ⓘ • `Uza el` \\#rezumen `para navegar mejor por todo el kontenido del Kanal\\.`'
     if delete:
         arc = open(resume,'w')
         arc.close()
@@ -248,6 +248,7 @@ def get_unproc_post():
         ans += parse_text(str(cnt)) + '\\- ' + parse_text(line)
         cnt += 1
     arc.close()
+    print(ans)
     return ans
 
 #deletes not used posts
