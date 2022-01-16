@@ -223,7 +223,7 @@ def get_unproc_post():
         if len(ans + parse_text(str(cnt)) + '\\- ' + parse_link(line)) >= 4096:
             res.append(ans)
             ans = ''
-        ans += parse_text(str(cnt)) + '\\- ' + parse_link(line)
+        ans += parse_text(str(cnt)) + '\\- ' + parse_link(line) + '\n'
         cnt += 1
     res.append(ans)
     arc.close()
