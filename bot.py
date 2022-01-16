@@ -267,7 +267,7 @@ def build(update,context):
     if len(texto) == 0:
         texto = f'No hay posts nuevos'
     for msg in texto:
-        sendMessage(update,context,texto)
+        sendMessage(update,context,msg)
 
 #sends resume to channel
 def send(update,context):
