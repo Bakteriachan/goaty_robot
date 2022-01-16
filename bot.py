@@ -79,7 +79,7 @@ def parse_link(text):
     match = re.match(re_exp,text)
     if match is None:
         raise Exception
-    print(f'[{parse_text(match.group(1))}]{match.group(2)}')
+    print(f'[{parse_text(match.group(1))}]{match.group(2)} ---------')
     return f'[{parse_text(match.group(1))}]{match.group(2)}'
 
 
@@ -166,8 +166,13 @@ def build_resume_text(delete=False):
     num,pastLink = get_past_link()
     ans = f'「Rezumen {parse_text(str(num+1))}」\n\n•*[Rezumen {parse_text(str(num))}]({pastLink})*\n\n'
     arc = download_file(f"htdocs/goaty_robot/{resume}",open_type="r")
+    res = []
     for line in arc:
+        if len(ans + '• *' + parse_link(line) + '*\n') >= 4096:
+            res.append(ans)
+            ans = ''
         ans += '• *' + parse_link(line) + '*\n'
+    res.append(ans)
     arc.close()
     upload_file(f"htdocs/goaty_robot/{resume}",resume)
     ans += 'ⓘ • `Uza el` \\#rezumen `para navegar mejor por todo el kontenido del Kanal\\.`'
@@ -175,8 +180,8 @@ def build_resume_text(delete=False):
         arc = open(resume,'w')
         arc.close()
         upload_file(f"htdocs/goaty_robot/{resume}",resume)
-    print(ans)
-    return ans
+    print(res)
+    return res
 
 
 #add element to resume
@@ -306,8 +311,9 @@ def show(update,context):
     if not validate_command(update):
         sendMessage(update,context,f'Este bot no lo puedes usar')
         return
-    text = build_resume_text()
-    sendMessage(update,context,text)
+    texto = build_resume_text()
+    for text in texto:
+        sendMessage(update,context,text)
     sendMessage(update,context,f'Para eliminar un elemento use el comando /remove.Para enviar el resumen use el comando /send')
 
 #adds element to resume
