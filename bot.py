@@ -79,7 +79,6 @@ def parse_link(text):
     match = re.match(re_exp,text)
     if match is None:
         raise Exception
-    print(f'[{parse_text(match.group(1))}]{match.group(2)} ---------')
     return f'[{parse_text(match.group(1))}]{match.group(2)}'
 
 
@@ -87,55 +86,19 @@ def parse_link(text):
 link_chars = '[]()'
 
 
-#idk what i did here ToT
-def fix(String:str) -> str:
-    return String
-    ans = ''
-    ant = ''
-    flag = False
-    isIn = False
-    for i in String:
-        if i == '[':
-            isIn = True
-        if i == ']':
-            isIn = False
-        if isIn and i == '.':
-            ans += '\\' + '.'
-            continue
-        if i in '[(':
-            flag = True
-        elif i in '])':
-            flag = False
-        if i == '~':
-            ant = i
-            continue
-        if i == '.' and flag == True:
-            ans += i
-            continue
-        if i not in special_chars or ant == '~':
-            ans += i
-        elif i not in link_chars:
-            ans += str('\\')
-            ans += i
-        else:
-            ans += i
-        ant = i
-    return ans
-
-
 def sendMessage(update,context,text):
     chatId = update.message['chat']['id']
     try:
-        return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
+        context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
     except:
-        print(text)
+        print('<-ERROR->',text)
         return -1
     
 def sendMessageById(Id,context,text):
     try:
-        return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
+        context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
     except:
-        print(text)
+        print('<-ERROR->  ',text)
         return -1
     
 #returns link of last resume
@@ -188,7 +151,6 @@ def build_resume_text(delete=False):
         arc = open(resume,'w')
         arc.close()
         upload_file(f"htdocs/goaty_robot/{resume}",resume)
-    print(res)
     return res
 
 
