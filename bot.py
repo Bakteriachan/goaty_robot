@@ -324,7 +324,7 @@ def remove(update,context):
     items = [int(i) for i in caption.split(' ')]
     for i in items:
         remove_element(i)
-    sendMessage(update,context,f'Eliminado!')
+    sendMessage(update,context,f'Eliminado\\!')
 
 #adds elements to resume manualy
 def plus(update,context):
