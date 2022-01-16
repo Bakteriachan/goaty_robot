@@ -163,7 +163,7 @@ def add_element(element):
 
 #removes element from resume
 def remove_element(element_idx):
-    arc = download_file(f"htdocs/goaty_robot/{resume}")
+    arc = download_file(f"htdocs/goaty_robot/{resume}",open_type='r')
 
     cnt = 1
     ans = ''
@@ -301,7 +301,7 @@ def add(update,context):
         sendMessage(update,context,f'Formato incorrecto')
         return
     try:
-        arc = open(unprocessed,'r',encoding='utf-8')
+        arc = download_file(f"htdocs/goaty_robot/{unprocessed}",open_type='r')
     except FileNotFoundError:
         arc = open(unprocessed,'w')
         arc.close()
@@ -312,7 +312,7 @@ def add(update,context):
     items = [int(i) for i in caption.split(' ')]
     for item in items:
         add_element(list_items[item-1])
-    sendMessage(update,context,f'Elementos añadidos!')
+    sendMessage(update,context,f'Elementos añadidos\\!')
 
 #handles removal of elements from resume
 def remove(update,context):
