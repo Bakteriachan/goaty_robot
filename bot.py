@@ -247,14 +247,17 @@ def add_unproc_post(update=None,link=None,name=None):
 def get_unproc_post():
     arc = download_file(f"htdocs/goaty_robot/{unprocessed}",open_type='r')
     ans = ''
-
+    res = []
     cnt = 1
     for line in arc:
-        ans += parse_text(str(cnt)) + '\\- ' + parse_text(line)
+        if len(ans + parse_text(str(cnt)) + '\\- ' + parse_link(line)) >= 4096:
+            res.append(ans)
+            ans = ''
+        ans += parse_text(str(cnt)) + '\\- ' + parse_link(line)
         cnt += 1
+    res.append(ans)
     arc.close()
-    print(ans)
-    return ans
+    return res
 
 #deletes not used posts
 def remove_unprocessed():
@@ -293,7 +296,8 @@ def build(update,context):
     texto = get_unproc_post()
     if len(texto) == 0:
         texto = f'No hay posts nuevos'
-    sendMessage(update,context,texto)
+    for msg in texto:
+        sendMessage(update,context,texto)
 
 #sends resume to channel
 def send(update,context):
@@ -314,7 +318,7 @@ def show(update,context):
     texto = build_resume_text()
     for text in texto:
         sendMessage(update,context,text)
-    sendMessage(update,context,f'Para eliminar un elemento use el comando /remove.Para enviar el resumen use el comando /send')
+    sendMessage(update,context,f'Para eliminar un elemento use el comando /remove\\.Para enviar el resumen use el comando /send')
 
 #adds element to resume
 def add(update,context):
