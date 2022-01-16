@@ -415,5 +415,7 @@ dp.add_handler(CommandHandler('pastlink',edit_past_link))# edit last resume link
 dp.add_handler(MessageHandler(Filters.text,recv_msg))
 dp.add_handler(MessageHandler(Filters.photo,recv_msg))
 
-updater.start_polling()
-updater.idle()
+heroku_app_name = os.getenv("HEROKU_APP_NAME")
+PORT = int(os.environ.get("PORT","8443"))
+updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN,webhook_url=f"https://{heroku_app_name}.herokuapp.com/{TOKEN}")
+
