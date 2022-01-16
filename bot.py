@@ -175,6 +175,7 @@ def build_resume_text(delete=False):
         arc = open(resume,'w')
         arc.close()
         upload_file(f"htdocs/goaty_robot/{resume}",resume)
+    print(ans)
     return ans
 
 
