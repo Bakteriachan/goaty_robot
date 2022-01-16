@@ -125,11 +125,19 @@ def fix(String:str) -> str:
 
 def sendMessage(update,context,text):
     chatId = update.message['chat']['id']
-    return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
-
+    try:
+        return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
+    except:
+        print(text)
+        return -1
+    
 def sendMessageById(Id,context,text):
-    return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
-
+    try:
+        return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
+    except:
+        print(text)
+        return -1
+    
 #returns link of last resume
 def get_past_link():
     try:
