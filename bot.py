@@ -76,6 +76,7 @@ def parse_text(text):
 
 def parse_link(text):
     re_exp = r'\[(.*)\](\(https://[a-zA-Z0-9/.]+\))'
+    print(text)
     match = re.match(re_exp,text)
     if match is None:
         raise Exception
