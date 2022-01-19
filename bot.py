@@ -143,11 +143,12 @@ def build_resume_text(delete=False):
         if len(ans + '• *' + parse_link(line) + '*\n') >= 4096:
             res.append(ans)
             ans = ''
-        ans += '• *' + parse_link(line) + '*\n'
+        ans += '• *' + parse_link(line) + '*\n\n'
+    ans += '\nⓘ • `Uza el` \\#rezumen `para navegar mejor por todo el kontenido del Kanal\\.`'
     res.append(ans)
     arc.close()
     upload_file(f"htdocs/goaty_robot/{resume}",resume)
-    ans += 'ⓘ • `Uza el` \\#rezumen `para navegar mejor por todo el kontenido del Kanal\\.`'
+    
     if delete:
         arc = open(resume,'w')
         arc.close()
