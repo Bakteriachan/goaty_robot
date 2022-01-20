@@ -90,14 +90,14 @@ link_chars = '[]()'
 def sendMessage(update,context,text):
     chatId = update.message['chat']['id']
     try:
-        context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
+        return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
     except:
         print('<-ERROR->',text)
         return -1
     
 def sendMessageById(Id,context,text):
     try:
-        context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
+        return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
     except:
         print('<-ERROR->  ',text)
         return -1
@@ -183,7 +183,7 @@ def remove_element(element_idx):
 
 #sends resume to channel
 def send_resume(update,context,text):
-    return sendMessageById(channel_id,context,text)
+    return sendMessageById(channel_id,context,text[0])
  
 
 #add unprocessed post element to file
