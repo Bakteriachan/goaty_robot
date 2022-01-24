@@ -76,7 +76,6 @@ def parse_text(text):
 
 def parse_link(text):
     re_exp = r'\[(.*)\](\(https://[a-zA-Z0-9/.?_]+\))'
-    print(text)
     match = re.match(re_exp,text)
     if match is None:
         raise Exception
@@ -92,14 +91,14 @@ def sendMessage(update,context,text):
     try:
         return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
     except:
-        print('<-ERROR->',text)
+        print('<-ERROR->',text,type(text))
         return -1
     
 def sendMessageById(Id,context,text):
     try:
         return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
     except:
-        print('<-ERROR->  ',text)
+        print('<-ERROR->  ',text,type(text))
         return -1
     
 #returns link of last resume
