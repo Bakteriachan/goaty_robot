@@ -268,6 +268,8 @@ def build(update,context):
     texto = get_unproc_post()
     if len(texto) == 0:
         texto = f'No hay posts nuevos'
+        sendMessage(update,context,texto)
+        return
     for msg in texto:
         sendMessage(update,context,msg)
 
