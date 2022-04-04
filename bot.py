@@ -1,7 +1,7 @@
 #Stuff to be Done: add regex 
 
 import logging
-import os,re,ftplib
+import os,re,ftplib,urllib.request
 import telegram
 from telegram.ext import Updater,CommandHandler,MessageHandler,Filters 
 #configuring Logging
@@ -34,6 +34,8 @@ def max(x,y):
 
 #Uploads File to FTP server
 def upload_file(destiny_file,origin_file):
+    site_address = os.getenv('site_address') or 'http://www.python.org/'
+    urllib.request.urlopen(site_address)
     
     session = ftplib.FTP(host, username, password)
     try:
@@ -49,6 +51,8 @@ def upload_file(destiny_file,origin_file):
     
 #download file from FTP server
 def download_file(filename,open_type='a'):
+    site_address = os.getenv('site_address') or 'http://www.python.org/'
+    urllib.request.urlopen(site_address)
     
     session = ftplib.FTP(host, username, password)
     localfile = filename[max(filename.rfind('/')+1,0):] 
