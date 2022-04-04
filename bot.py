@@ -225,7 +225,12 @@ def get_unproc_post():
     res = []
     cnt = 1
     for line in arc:
-        if len(ans + parse_text(str(cnt)) + '\\- ' + parse_link(line)) >= 4096:
+        try:
+            parsed_link = parse_link(line)
+        except:
+            res.append(f'no se pudo parsear el link siguiente: {line}')
+            continue
+        if len(ans + parse_text(str(cnt)) + '\\- ' + parsed_link) >= 4096:
             res.append(ans)
             ans = ''
         ans += parse_text(str(cnt)) + '\\- ' + parse_link(line) + '\n'
