@@ -413,7 +413,7 @@ def backup_resume(update,context):
         context.bot.send_message(chat_id = CHAT_ID,text='No puedes usar este bot')
         return 
 
-    v = download_file(resume,'rb',encoding=False)
+    v = download_file(f'htdocs/goaty_robot/{resume}','rb',encoding=False)
     if len(v.read()) > 0:
         context.bot.send_document(
             chat_id = CHAT_ID,
@@ -426,7 +426,7 @@ def backup_resume(update,context):
             text = 'No hay nada en el resumen.'
         )
 
-    v = download_file(unprocessed,'rb',encoding=False)
+    v = download_file(f'htdocs/goaty_robot/{unprocessed}','rb',encoding=False)
     if len(v.read()) > 0:
         context.bot.send_document(
             chat_id = CHAT_ID,
@@ -464,9 +464,11 @@ dp.add_handler(MessageHandler(Filters.text,recv_msg))
 dp.add_handler(MessageHandler(Filters.photo,recv_msg))
 dp.add_error_handler(error_handler)
 
+updater.start_polling()
+print('Bot running')
+updater.idle()
 
-
-heroku_app_name = os.getenv("HEROKU_APP_NAME")
-PORT = int(os.environ.get("PORT","8443"))
-updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN,webhook_url=f"https://{heroku_app_name}.herokuapp.com/{TOKEN}")
+#heroku_app_name = os.getenv("HEROKU_APP_NAME")
+#PORT = int(os.environ.get("PORT","8443"))
+#updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN,webhook_url=f"https://{heroku_app_name}.herokuapp.com/{TOKEN}")
 
