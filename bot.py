@@ -1,7 +1,7 @@
 #Stuff to be Done: add regex 
 
 import logging
-import os,re,ftplib,urllib.request
+import os,re,ftplib,urllib.request,sys
 import telegram
 from telegram.ext import Updater,CommandHandler,MessageHandler,Filters 
 #configuring Logging
@@ -18,7 +18,7 @@ TOKEN = os.getenv('TOKEN')
 unprocessed = os.getenv('unprocessed')
 resume = os.getenv('resume')
 past = os.getenv('past')
-channel_id = int(os.getenv('channel_id'))
+channel_id = os.getenv('channel_id')
 goat_id = list(map(int,str(os.getenv('goat_id')).split(' ')))
 #FTP variables
 host = os.getenv('host')
@@ -50,7 +50,7 @@ def upload_file(destiny_file,origin_file):
     file.close()  # close file and FTP session
     
 #download file from FTP server
-def download_file(filename,open_type='a'):
+def download_file(filename,open_type='a',encoding=True):
     site_address = os.getenv('site_address') or 'http://www.python.org/'
     urllib.request.urlopen(site_address)
     
@@ -58,13 +58,20 @@ def download_file(filename,open_type='a'):
     localfile = filename[max(filename.rfind('/')+1,0):] 
     f = open(localfile, 'wb')  # save into local file
     try:
-        session.retrbinary('RETR ' + filename, f.write, 1024)
+        session.retrbinary('RETR ' + filename, f.write, 2048)
     except ftplib.error_perm: #if file not in FTP
         f.close()
-        return open(localfile,open_type,encoding='utf-8')
-    f.close()  # close file and FTP session
-    return open(localfile,open_type,encoding='utf-8') 
+        if encoding:
+            return open(localfile,open_type,encoding='utf-8')
+        else:
+            return open(localfile,open_type)
 
+    f.close()  # close file and FTP session
+    session.quit()
+    if encoding:
+        return open(localfile,open_type,encoding='utf-8') 
+    else:
+        return open(localfile,open_type)
 
 #some telegram special chars
 special_chars = ['_', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
@@ -295,7 +302,7 @@ def send(update,context):
         return
     texto = build_resume_text(True)
     Message = send_resume(update,context,texto)
-    sendMessage(update,context,'Resumen enviado!')
+    sendMessage(update,context,parse_text('Resumen enviado!'))
     save_link(get_past_link()[0]+1,f'https://t.me/{Message.chat.username}/{Message.message_id}')
     remove_unprocessed()    
 
@@ -400,6 +407,45 @@ def edit_past_link(update,context):
     number = int(number)
     save_link(number-1,link)
 
+def backup_resume(update,context):
+    CHAT_ID = update.message.chat.id
+    if CHAT_ID not in goat_id:
+        context.bot.send_message(chat_id = CHAT_ID,text='No puedes usar este bot')
+        return 
+
+    v = download_file(resume,'rb',encoding=False)
+    if len(v.read()) > 0:
+        context.bot.send_document(
+            chat_id = CHAT_ID,
+            document = open('resume.txt','rb'),
+            filename="past.txt"
+        )
+    else :
+        context.bot.send_message(
+            chat_id = CHAT_ID,
+            text = 'No hay nada en el resumen.'
+        )
+
+    v = download_file(unprocessed,'rb',encoding=False)
+    if len(v.read()) > 0:
+        context.bot.send_document(
+            chat_id = CHAT_ID,
+            document = open(unprocessed,'rb')
+        )
+    else:
+        context.bot.send_message(
+            chat_id = CHAT_ID,
+            text = 'No hay post nuevos.'
+        )
+
+def error_handler(update,context):
+    CHAT_ID = update.effective_chat.id
+    context.bot.send_message(
+        chat_id = CHAT_ID,
+        text = str(sys.exc_info())
+    )
+
+
 if __name__ == '__main__':
     my_bot = telegram.Bot(token = TOKEN)
 
@@ -413,8 +459,12 @@ dp.add_handler(CommandHandler("add",add))#adds element to resume
 dp.add_handler(CommandHandler('remove',remove))#remove element from resume
 dp.add_handler(CommandHandler('plus',plus))#adds element manualy
 dp.add_handler(CommandHandler('pastlink',edit_past_link))# edit last resume link stuff
+dp.add_handler(CommandHandler('backup',backup_resume))
 dp.add_handler(MessageHandler(Filters.text,recv_msg))
 dp.add_handler(MessageHandler(Filters.photo,recv_msg))
+dp.add_error_handler(error_handler)
+
+
 
 heroku_app_name = os.getenv("HEROKU_APP_NAME")
 PORT = int(os.environ.get("PORT","8443"))
