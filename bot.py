@@ -143,7 +143,12 @@ def build_resume_text(delete=False):
     arc = download_file(f"htdocs/goaty_robot/{resume}",open_type="r")
     res = []
     for line in arc:
-        if len(ans + '• *' + parse_link(line) + '*\n') >= 4096:
+        try:
+            parsed_link = parse_link(line)
+        except:
+            print(f'Error : {line}')
+            continue
+        if len(ans + '• *' + parsed_link + '*\n') >= 4096:
             res.append(ans)
             ans = ''
         ans += '• *' + parse_link(line) + '*\n\n'
