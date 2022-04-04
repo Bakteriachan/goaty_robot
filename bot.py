@@ -228,7 +228,7 @@ def get_unproc_post():
         try:
             parsed_link = parse_link(line)
         except:
-            res.append(f'no se pudo parsear el link siguiente: {line}')
+            res.append(f'no se pudo parsear el link siguiente: {parse_text(line)}')
             continue
         if len(ans + parse_text(str(cnt)) + '\\- ' + parsed_link) >= 4096:
             res.append(ans)
