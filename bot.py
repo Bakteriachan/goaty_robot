@@ -191,8 +191,10 @@ def remove_element(element_idx):
 
 #sends resume to channel
 def send_resume(update,context,text):
-    return sendMessageById(channel_id,context,text[0])
- 
+    ans = sendMessageById(channel_id,context,text[0])
+    for value in text[1:]:
+        sendMessageById(channel_id,context,value)
+    return value
 
 #add unprocessed post element to file
 def add_unproc_post(update=None,link=None,name=None):
