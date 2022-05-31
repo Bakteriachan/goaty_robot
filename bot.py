@@ -281,6 +281,10 @@ def recv_msg(update,context):
         if validate_post(update):
             print(update)
             add_unproc_post(update)
+        else:
+            print(f'POST is not from id {channel_id}')
+    else:
+        print('Message is not a channel POST')
 
 #builds resume
 def build(update,context):
