@@ -276,6 +276,7 @@ def validate_command(update):
 
 #handles channel posts
 def recv_msg(update,context):
+    print(update)
     if update.channel_post is not None:
         if validate_post(update):
             print(update)
