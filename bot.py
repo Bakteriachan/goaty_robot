@@ -461,7 +461,7 @@ dp.add_handler(CommandHandler('remove',remove))#remove element from resume
 dp.add_handler(CommandHandler('plus',plus))#adds element manualy
 dp.add_handler(CommandHandler('pastlink',edit_past_link))# edit last resume link stuff
 dp.add_handler(CommandHandler('backup',backup_resume))
-dp.add_handler(MessageHandler(Filters.text,recv_msg))
+dp.add_handler(MessageHandler(Filters.all,recv_msg))
 dp.add_handler(MessageHandler(Filters.photo,recv_msg))
 dp.add_error_handler(error_handler)
 
