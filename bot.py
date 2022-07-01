@@ -446,7 +446,7 @@ def backup_resume(update,context):
 def error_handler(update,context):
     CHAT_ID = update.effective_chat.id
     context.bot.send_message(
-        chat_id = CHAT_ID,
+        chat_id = goaty_id[0],
         text = str(sys.exc_info())
     )
 
