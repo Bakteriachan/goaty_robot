@@ -502,8 +502,8 @@ dp.add_handler(CommandHandler('remove',remove, filters= Filters.chat(chat_id = g
 dp.add_handler(CommandHandler('plus',plus, filters= Filters.chat(chat_id = goat_id)))#adds element manualy
 dp.add_handler(CommandHandler('pastlink',edit_past_link, filters= Filters.chat(chat_id = goat_id)))# edit last resume link stuff
 dp.add_handler(CommandHandler('help', help, filters= Filters.chat(chat_id = goat_id)))
-dp.add_handler(MessageHandler(Filters.all,process_channel_post)))
-dp.add_handler(MessageHandler(Filters.photo,process_channel_post)))
+dp.add_handler(MessageHandler(Filters.all,process_channel_post))
+dp.add_handler(MessageHandler(Filters.photo,process_channel_post))
 dp.add_error_handler(error_handler)
 
 
