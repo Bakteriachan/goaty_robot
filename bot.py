@@ -49,6 +49,28 @@ past_filename = main_dir + 'past'
 #some telegram special chars
 special_chars = ['_', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 
+def help_text():
+    return '''
+        /plus Annade un elemento a la lista de elementos disponibles
+        FORMAT: /plus (Un titula mamado)[https://t.me/goatstuffs/123]
+        
+        /add Annade elementos al resumen
+        -> arreglado error de espacio entre numeros [Ya no importa si pones cualquier caracter, el solo lee los numeros que pones]
+        FORMAT: /add 1 2 3 4
+        
+        /remove Elimina elementos del resumen
+        
+        /build Muestra los elementos disponibles para annadir al resumen
+        
+        /pastlink Configura el link del ultimo Resumen
+        FORMAT: /pastlink (256)[https://cubadebate.cu]
+        
+        /show Muestra el resumen actual
+        
+        /send Envia el resumen al canal
+    
+    '''
+
 def parse_text(text):
     if isinstance(text, bytes):
         text = text.decode('utf-8')
@@ -238,6 +260,10 @@ def remove_resume():
 #   Command Handlers functions  #
 #                               #
 #################################
+
+def help(update: Update, ctxt: CallbackContext):
+    text = help_text()
+    update.effective_chat.send_message(text)
 
 #handles channel posts
 def process_channel_post(update:Update,ctxt:CallbackContext):
@@ -475,6 +501,7 @@ dp.add_handler(CommandHandler("add",add))#adds element to resume
 dp.add_handler(CommandHandler('remove',remove))#remove element from resume
 dp.add_handler(CommandHandler('plus',plus))#adds element manualy
 dp.add_handler(CommandHandler('pastlink',edit_past_link))# edit last resume link stuff
+dp.add_handler(CommandHandler('help', help))
 dp.add_handler(MessageHandler(Filters.all,process_channel_post))
 dp.add_handler(MessageHandler(Filters.photo,process_channel_post))
 dp.add_error_handler(error_handler)
