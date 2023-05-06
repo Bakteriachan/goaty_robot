@@ -161,6 +161,8 @@ def get_past_link():
         raise Exception('Could not open past link file')
     else:
         match = re.match(b'(https://t\\.me/[a-zA-Z_0-9]+/[0-9]+)\x00([0-9]+)',past.read(-1))
+        if match is None:
+            return ['https://t.me/GoatsStuffs', 0]
         return [match.group(1).decode('utf-8'),int(match.group(2).decode('utf-8'))]
 
 def build_resume_text(curr_num):
@@ -325,7 +327,7 @@ def show(update,context):
     shows current resume
     '''
     past_resume = get_past_link()
-
+    
     curr_resume = build_resume_text(past_resume[1] + 1)
 
     for message in curr_resume:
