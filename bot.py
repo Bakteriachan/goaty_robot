@@ -495,15 +495,15 @@ updater = Updater(my_bot.token,use_context = True);
 dp = updater.dispatcher
 
 dp.add_handler(CommandHandler("build",build, filters= Filters.chat(chat_id = goat_id )))#sends a message of available post
-dp.add_handler(CommandHandler("send",send, filters= Filters.chat(chat_id = goat_id))#sends resume to channel
-dp.add_handler(CommandHandler("show",show, filters= Filters.chat(chat_id = goat_id))#show current resume
-dp.add_handler(CommandHandler("add",add, filters= Filters.chat(chat_id = goat_id))#adds element to resume
-dp.add_handler(CommandHandler('remove',remove, filters= Filters.chat(chat_id = goat_id))#remove element from resume
-dp.add_handler(CommandHandler('plus',plus, filters= Filters.chat(chat_id = goat_id))#adds element manualy
-dp.add_handler(CommandHandler('pastlink',edit_past_link, filters= Filters.chat(chat_id = goat_id))# edit last resume link stuff
-dp.add_handler(CommandHandler('help', help, filters= Filters.chat(chat_id = goat_id))
-dp.add_handler(MessageHandler(Filters.all,process_channel_post))
-dp.add_handler(MessageHandler(Filters.photo,process_channel_post))
+dp.add_handler(CommandHandler("send",send, filters= Filters.chat(chat_id = goat_id)))#sends resume to channel
+dp.add_handler(CommandHandler("show",show, filters= Filters.chat(chat_id = goat_id)))#show current resume
+dp.add_handler(CommandHandler("add",add, filters= Filters.chat(chat_id = goat_id)))#adds element to resume
+dp.add_handler(CommandHandler('remove',remove, filters= Filters.chat(chat_id = goat_id)))#remove element from resume
+dp.add_handler(CommandHandler('plus',plus, filters= Filters.chat(chat_id = goat_id)))#adds element manualy
+dp.add_handler(CommandHandler('pastlink',edit_past_link, filters= Filters.chat(chat_id = goat_id)))# edit last resume link stuff
+dp.add_handler(CommandHandler('help', help, filters= Filters.chat(chat_id = goat_id)))
+dp.add_handler(MessageHandler(Filters.all,process_channel_post)))
+dp.add_handler(MessageHandler(Filters.photo,process_channel_post)))
 dp.add_error_handler(error_handler)
 
 
