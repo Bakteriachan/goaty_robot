@@ -1,82 +1,79 @@
-#Stuff to be Done: add regex 
-
+import ftplib
 import logging
-import os,re,ftplib,urllib.request,sys
+import os
+import re
+import sys
+from sys import stderr
+
 import telegram
-from telegram.ext import Updater,CommandHandler,MessageHandler,Filters 
+from telegram import Update, Chat
+from telegram.ext import CommandHandler, Filters, MessageHandler, Updater, CallbackContext, Filters
+
 #configuring Logging
 logging.basicConfig(
     level = logging.INFO,format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s,"
 )
 logger = logging.getLogger()
+
+
 #################################
 #                               #
 #     ENVIRONMENT VARIABLES     #
 #                               #
 #################################
 TOKEN = os.getenv('TOKEN')
-unprocessed = os.getenv('unprocessed')
-resume = os.getenv('resume')
-past = os.getenv('past')
+if TOKEN is None:
+    print("TOKEN environment variable is not specified",file=stderr)
+    exit(1)
+
 channel_id = int(os.getenv('channel_id'))
+
+if channel_id is None:
+    print("channel_id environment variable is not specified")
+    exit(1)
+
+if os.getenv('goat_id',None) is None:
+    print("goat_id environment varible is not specified")
+    exit(1)
+
 goat_id = list(map(int,str(os.getenv('goat_id')).split(' ')))
-#FTP variables
-host = os.getenv('host')
-username = os.getenv('username')
-password = os.getenv('password')
-###END#####
-#ftplib.error_perm
 
-def max(x,y):
-    if x > y:
-        return x
-    return y
 
-#Uploads File to FTP server
-def upload_file(destiny_file,origin_file):
-    site_address = os.getenv('site_address') or 'http://www.python.org/'
-    urllib.request.urlopen(site_address)
+main_dir = '/data/'
+if os.getenv('LOCAL',None) is not None:
+    main_dir = './'
     
-    session = ftplib.FTP(host, username, password)
-    try:
-        file = open(origin_file, 'rb')  # file to send
-    except FileNotFoundError:
-        file = open(origin_file,'w')
-        file.close()
-        file = open(origin_file,'rb')
-        print(destiny_file)
-    session.storbinary('STOR '+destiny_file, file)  # send the file
-    session.quit()
-    file.close()  # close file and FTP session
-    
-#download file from FTP server
-def download_file(filename,open_type='a',encoding=True):
-    site_address = os.getenv('site_address') or 'http://www.python.org/'
-    urllib.request.urlopen(site_address)
-    
-    session = ftplib.FTP(host, username, password)
-    localfile = filename[max(filename.rfind('/')+1,0):] 
-    f = open(localfile, 'wb')  # save into local file
-    try:
-        session.retrbinary('RETR ' + filename, f.write, 2048)
-    except ftplib.error_perm: #if file not in FTP
-        f.close()
-        if encoding:
-            return open(localfile,open_type,encoding='utf-8')
-        else:
-            return open(localfile,open_type)
-
-    f.close()  # close file and FTP session
-    session.quit()
-    if encoding:
-        return open(localfile,open_type,encoding='utf-8') 
-    else:
-        return open(localfile,open_type)
-
+unproc_file_name = main_dir + 'unprocessed'
+resume_filename = main_dir + 'resume'
+past_filename = main_dir + 'past'
 #some telegram special chars
 special_chars = ['_', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 
+def help_text():
+    return '''
+        /plus Annade un elemento a la lista de elementos disponibles
+        FORMAT: /plus (Un titula mamado)[https://t.me/goatstuffs/123]
+        
+        /add Annade elementos al resumen
+        -> arreglado error de espacio entre numeros [Ya no importa si pones cualquier caracter, el solo lee los numeros que pones]
+        FORMAT: /add 1 2 3 4
+        
+        /remove Elimina elementos del resumen
+        
+        /build Muestra los elementos disponibles para annadir al resumen
+        
+        /pastlink Configura el link del ultimo Resumen
+        FORMAT: /pastlink (256)[https://cubadebate.cu]
+        
+        /show Muestra el resumen actual
+        
+        /send Envia el resumen al canal
+    
+    '''
+
 def parse_text(text):
+    if isinstance(text, bytes):
+        text = text.decode('utf-8')
     ans = ''
     for i in text:
         if i in special_chars:
@@ -85,188 +82,178 @@ def parse_text(text):
     return ans
 
 
-def parse_link(text):
-    re_exp = r'\[(.*)\](\(https://[a-zA-Z0-9/.?_]+\))'
-    match = re.match(re_exp,text)
-    if match is None:
-        raise Exception
-    return f'[{parse_text(match.group(1))}]{match.group(2)}'
-
-
-
-link_chars = '[]()'
-
-
-def sendMessage(update,context,text):
-    chatId = update.message['chat']['id']
-    try:
-        return context.bot.sendMessage(chat_id = chatId,parse_mode = "MarkdownV2",text = text,disable_web_page_preview=True)
-    except:
-        print('<-ERROR->',text,type(text))
-        return -1
+def new_unprocessed_post(link,title):
+    assert(isinstance(link, str))
+    assert(isinstance(title, str))
     
-def sendMessageById(Id,context,text):
     try:
-        return context.bot.sendMessage(chat_id = Id,parse_mode = "MarkdownV2",text = text,disable_web_page_preview =True)
-    except:
-        print('<-ERROR->  ',text,type(text))
-        return -1
+        unproc_file = open(unproc_file_name,'ab')
+    except OSError:
+        raise Exception('Could not open unprocessed posts file')
+    else:
+        post_obj = bytes(link,'utf-8') + b'\x00' + bytes(title,'utf-8') + b'\x01'
+        if not unproc_file.write(post_obj) == len(post_obj):
+            raise Exception('Could not write data to unprocessed file')
+        else:
+            unproc_file.close()
+            return True
     
-#returns link of last resume
+
+def get_unproc_posts():
+    '''
+    returns a list of al unprocessed posts link and title
+    [(link,title),(link1,title1),...]
+    '''
+    try:
+        unproc_file = open(unproc_file_name,'rb')
+    except OSError:
+        raise Exception('Could not open unprocessed file for reading data')
+    else:
+        search = re.findall(b'(https://t\\.me/[a-zA-Z_0-9]+/[0-9]+)\x00([^\x01]+)\x01',unproc_file.read(-1))
+        unproc_file.close()
+
+    return search
+
+
+def get_unproc_posts_message():
+    '''
+    returns a list with unprocessed post messages
+    '''
+
+    posts = get_unproc_posts()
+    print(posts)
+
+    res = []
+    curr = ''
+    cnt = 1
+    for post in posts:
+        link = f'{cnt} \\- [{parse_text(post[1])}]({parse_text(post[0])})\n'
+        if len(curr) + len(link) >= 4096:
+            res.append(curr)
+            curr = ''
+        curr += link
+        cnt += 1
+    
+    if len(curr) == 0:
+        return []
+    res.append(curr)
+
+    return res
+
+def new_resume_element(link,title):
+    
+    try:
+        resume = open(resume_filename,'ab')
+    except OSError:
+        raise  Exception('Could not open resume file')
+    else:
+        resume_obj = bytes(link) + b'\x00' + bytes(title)  + b'\x01'
+
+        if not resume.write(resume_obj) == len(resume_obj):
+            raise Exception('Could not write data to file')
+        else:
+            return True
+
+def get_resume_posts():
+
+    try:
+        resume = open(resume_filename,'rb')
+    except OSError:
+        raise Exception('Could not open a file')
+    else:
+        search = re.findall(b'(https://t\\.me/[a-zA-Z_0-9]+/[0-9]+)\x00([0-9]+)\x01',resume.read(-1))
+        resume.close()
+    
+    res = []
+
+    for m in search:
+        a = m[0].decode('utf-8')
+        b = m[1].decode('utf-8')
+        res.append((a,b))
+
+    return res
+
 def get_past_link():
+    '''
+    returns the past resume link
+    '''
     try:
-        arc = download_file(f"htdocs/goaty_robot/{past}",'r')
-        number = arc.readline()
-        if number[-1] == '\n':
-            number = number[:-1]
-        link = arc.readline()
-        if link[-1] == '\n':
-            link = link[:-1]
-        return (int(number),link)
-        arc.close()
-        upload_file(f"htdocs/goaty_robot/{past}",past)
-    except:
-        return (14,'https://t.me/unCanalWe/56')
-    return None
+        past = open(past_filename,'rb')
+    except OSError:
+        raise Exception('Could not open past link file')
+    else:
+        match = re.match(b'(https://t\\.me/[a-zA-Z_0-9]+/[0-9]+)\x00([0-9]+)',past.read(-1))
+        if match is None:
+            return ['https://t.me/GoatsStuffs', 0]
+        return [match.group(1).decode('utf-8'),int(match.group(2).decode('utf-8'))]
 
-#saves link of sent resume
-def save_link(curr_num,link):
-    try:
-        arc = download_file(f"htdocs/goaty_robot/{past}",'w')
-        arc.write(str(curr_num))
-        arc.write('\n')
-        arc.write(link)
-        arc.write('\n')
-        arc.close()
-        upload_file(f"htdocs/goaty_robot/{past}",past)
-    except:
-        return False
-    return True
+def build_resume_text(curr_num):
 
-#builds resume text
-def build_resume_text(delete=False):
-    num,pastLink = get_past_link()
-    ans = f'「Rezumen {parse_text(str(num+1))}」\n\n•*[Rezumen {parse_text(str(num))}]({pastLink})*\n\n'
-    arc = download_file(f"htdocs/goaty_robot/{resume}",open_type="r")
     res = []
-    for line in arc:
-        try:
-            parsed_link = parse_link(line)
-        except:
-            print(f'Error : {line}')
-            continue
-        if len(ans + '• *' + parsed_link + '*\n') >= 4096:
-            res.append(ans)
-            ans = ''
-        ans += '• *' + parse_link(line) + '*\n\n'
-    ans += '\nⓘ • `Uza el` \\#rezumen `para navegar mejor por todo el kontenido del Kanal\\.`'
-    res.append(ans)
-    arc.close()
-    upload_file(f"htdocs/goaty_robot/{resume}",resume)
+
+    past_resume = get_past_link()
+
+    curr = f'「Rezumen {curr_num}」\n\n• [Resumen {past_resume[1]}]({past_resume[0]})\n\n'
+
+    posts = get_resume_posts()
+
+    for post in posts:
+        resume = f'• [{parse_text(post[1])}]({post[0]}) \n\n'
+        if len(curr) + len(resume) >= 4096:
+            res.append(curr)
+            curr = ''
+        curr += resume
+    resume = f'ⓘ • `Uza el #rezumen para navegar mejor por todo el kontenido del Kanal\\.`'
+    if len(curr) + len(resume) >= 4096:
+        res.append(curr)
+        curr = ''
+    curr += resume
+
+    res.append(curr)
+
+    return res
+
     
-    if delete:
-        arc = open(resume,'w')
-        arc.close()
-        upload_file(f"htdocs/goaty_robot/{resume}",resume)
-    return res
+def update_past_link(link,num):
+    '''
+    updates past resume link
+    '''
+    try:
+        past = open(past_filename,'wb')
+    except OSError:
+        raise Exception('Could not open past link file')
+    else:
+        past.write(bytes(link,'utf-8') + b'\x00' + bytes(num,'utf-8'))
+        return True
+    
 
 
-#add element to resume
-def add_element(element):
-    arc = download_file(f"htdocs/goaty_robot/{resume}")
-    arc.write(element)
-    arc.close()
-    upload_file(f"htdocs/goaty_robot/{resume}",resume)
 
-#removes element from resume
-def remove_element(element_idx):
-    arc = download_file(f"htdocs/goaty_robot/{resume}",open_type='r')
 
-    cnt = 1
-    ans = ''
-    for line in arc:
-        if cnt == element_idx:
-            cnt+=1
-            continue
-        cnt += 1
-        ans += line
-    arc.close()
-    arc = open(resume,'w')
-    arc.close()
-    upload_file(f"htdocs/goaty_robot/{resume}",resume)
-    add_element(ans)
-
-#sends resume to channel
-def send_resume(update,context,text):
-    ans = sendMessageById(channel_id,context,text[0])
-    for value in text[1:]:
-        sendMessageById(channel_id,context,value)
-    return value
-
-#add unprocessed post element to file
-def add_unproc_post(update=None,link=None,name=None):
-    #this functions is used to add manualy or automatic
-    #by recving channel post
-    if name==None and link == None and update == None:
-        return
-    if update == None and link is not None and name is not None: #adding element entered manualy
-        arc = download_file(f"htdocs/goaty_robot/{unprocessed}")
-        arc.write(f'[{name}]({link})\n')
-        arc.close()
-        upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
-    if update == None:
-        return
-    message_id = update.channel_post['message_id']
-    channel_name = update.channel_post['sender_chat']['username'] or update.channel_post['sender_chat']['title'] or update.channel_post['chat']['title']  
-    Link = f'https://t.me/{channel_name}/{message_id}'
-    caption = update.channel_post['text']
-    if caption == None:
-        caption = update.channel_post['caption']
-    element_name = ''
-    for i in caption:
-        if i == '\n':
-            break
-        element_name += i
-    arc = download_file(f"htdocs/goaty_robot/{unprocessed}")
-    arc.write(f'[{element_name}]({Link})\n')
-    arc.close()
-    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
-
-#get unprocessed posts from file
-def get_unproc_post():
-    arc = download_file(f"htdocs/goaty_robot/{unprocessed}",open_type='r')
-    ans = ''
-    res = []
-    cnt = 1
-    for line in arc:
-        try:
-            parsed_link = parse_link(line)
-        except:
-            res.append(f'no se pudo parsear el link siguiente: {parse_text(line)}')
-            continue
-        if len(ans + parse_text(str(cnt)) + '\\- ' + parsed_link) >= 4096:
-            res.append(ans)
-            ans = ''
-        ans += parse_text(str(cnt)) + '\\- ' + parse_link(line) + '\n'
-        cnt += 1
-    res.append(ans)
-    arc.close()
-    return res
-
-#deletes not used posts
 def remove_unprocessed():
-    arc = open(unprocessed,'w')
-    arc.close()
-    upload_file(f"htdocs/goaty_robot/{unprocessed}",unprocessed)
+    '''
+    Delete file content 
+    '''
+    try:
+        unproc_file = open(unproc_file_name,'w')
+    except Exception:
+        return False
+    else:
+        unproc_file.close()
+        return True
 
-#if post is from goat's channel
-def validate_post(update):
-    return update.channel_post['sender_chat']['id'] == channel_id
+def remove_resume():
+    '''
+    Delete file content 
+    '''
+    try:
+        resume = open(resume_filename,'w')
+    except Exception:
+        return False
+    else:
+        resume.close()
+        return True
 
-#if command is goat's
-def validate_command(update):
-    print(goat_id)
-    return update.message['chat']['id'] in goat_id
 
 #################################
 #                               #
@@ -274,118 +261,203 @@ def validate_command(update):
 #                               #
 #################################
 
+def help(update: Update, ctxt: CallbackContext):
+    text = help_text()
+    update.effective_chat.send_message(text)
+
 #handles channel posts
-def recv_msg(update,context):
-    print(update)
-    if update.channel_post is not None:
-        if validate_post(update):
-            print(update)
-            add_unproc_post(update)
-        else:
-            print(f'POST is not from id {channel_id}')
-    else:
-        print('Message is not a channel POST')
+def process_channel_post(update:Update,ctxt:CallbackContext):
+    '''
+    process channel post
+    '''
+    if update.effective_chat.type not in (Chat.CHANNEL,):
+        return None
+    if update.effective_chat.id not in (channel_id,):
+        return None
+    try:
+        post_title = update.effective_message.text
+        if post_title is None:
+            post_title = update.effective_message.caption
+        
+        pos = post_title.find('\n')
+        if pos == -1:
+            pos = len(post_title)
+
+        post_title = post_title[:pos]
+    except Exception as e:
+        print(e)
+        return None
+    
+    post_link = f'https://t.me/{update.effective_chat.username}/{update.effective_message.message_id}'
+
+    new_unprocessed_post(post_link, post_title)
 
 #builds resume
-def build(update,context):
-    if not validate_command(update):
-        sendMessage(update,context,f'Este bot no lo puedes usar')
-        return
-    sendMessage(update,context,'A continuacion los posts disponibles,\nPara añadir uno al resumen use el comando /add')
-    texto = get_unproc_post()
-    if len(texto) == 0:
-        texto = f'No hay posts nuevos'
-        sendMessage(update,context,texto)
-        return
-    for msg in texto:
-        sendMessage(update,context,msg)
+def build(update:Update,ctxt:CallbackContext):
+    '''
+    shows unprocessed posts
+    '''
+    update.effective_chat.send_message(
+        text = 'A continuacion los posts disponibles. Para añadir uno al resumen use el comando /add'
+    )
+
+    unproc_message_posts = get_unproc_posts_message()
+
+    print(unproc_message_posts)
+
+    for msg in unproc_message_posts:
+        update.effective_chat.send_message(
+            text = msg,
+            parse_mode='MarkdownV2',
+            disable_web_page_preview=True
+        )
+    
+    if len(unproc_message_posts) == 0:
+        update.effective_chat.send_message(
+            text = 'No hay posts nuevos',
+            disable_web_page_preview=True
+        )
+
 
 #sends resume to channel
-def send(update,context):
-    if not validate_command(update):
-        sendMessage(update,context,f'Este bot no lo puedes usar')
-        return
-    texto = build_resume_text(True)
-    Message = send_resume(update,context,texto)
-    sendMessage(update,context,parse_text('Resumen enviado!'))
-    save_link(get_past_link()[0]+1,f'https://t.me/{Message.chat.username}/{Message.message_id}')
-    remove_unprocessed()    
+def send(update,ctxt):
+    '''
+    sends resume to channel
+    ''' 
+    past_resume = get_past_link()
+    curr_resume = build_resume_text(past_resume[1] + 1)
+
+    link = None
+
+    for message in curr_resume:
+        message = ctxt.bot.send_message(
+            chat_id = channel_id,
+            text = message,
+            parse_mode = 'MarkdownV2',
+            disable_web_page_preview = True
+        )
+        if link is None:
+            link = f'https://t.me/{message.chat.username}/{message.message_id}'
+
+    update_past_link(link, str(past_resume[1] + 1))
+    remove_resume()
+    remove_unprocessed()
+
+    update.effective_chat.send_message(
+        text = 'Enviado correctamente'
+    )
 
 #show current resume
 def show(update,context):
-    if not validate_command(update):
-        sendMessage(update,context,f'Este bot no lo puedes usar')
-        return
-    texto = build_resume_text()
-    for text in texto:
-        sendMessage(update,context,text)
-    sendMessage(update,context,f'Para eliminar un elemento use el comando /remove\\.Para enviar el resumen use el comando /send')
+    '''
+    shows current resume
+    '''
+    past_resume = get_past_link()
+    
+    curr_resume = build_resume_text(past_resume[1] + 1)
 
-#adds element to resume
-def add(update,context):
-    if not validate_command(update):
-        sendMessage(update,context,f'Este bot no lo puedes usar')
-        return
+    for message in curr_resume:
+        update.effective_chat.send_message(
+            text = message,
+            parse_mode = 'MarkdownV2',
+            disable_web_page_preview = True
+        )
 
-    caption = update.message['text'][4:].strip()
-    if len(caption) == 0:
-        sendMessage(update,context,f'Formato incorrecto')
-        return
-    try:
-        arc = download_file(f"htdocs/goaty_robot/{unprocessed}",open_type='r')
-    except FileNotFoundError:
-        arc = open(unprocessed,'w')
-        arc.close()
-        arc = open(unprocessed,'r',encoding='utf-8')
+    
 
-    list_items = [line for line in arc]
-    arc.close()
-    items = [int(i) for i in caption.split(' ')]
-    for item in items:
-        add_element(list_items[item-1])
-    sendMessage(update,context,f'Elementos añadidos\\!')
 
-#handles removal of elements from resume
+def add(update:Update,ctxt:CallbackContext):
+    '''
+    add elemets to resume.
+    command:
+    /add a_1 [ a_2 [ a_3 ...]]
+    add element a_1 a_2 a_3 to resume
+    '''
+
+    elements = re.findall(r'[0-9]+', update.effective_message.text)
+
+    elements = list(map(int, elements))
+
+    unproc_elements = get_unproc_posts()
+
+    cnt = 0
+
+    for i in elements:
+        try:
+            new_resume_element(unproc_elements[i-1][0], unproc_elements[i-1][1])
+        except IndexError:
+            pass
+        else:
+            cnt += 1
+
+    update.effective_chat.send_message(
+        text = f'añadidos {cnt} elementos'
+    )
+
+
+
+
 def remove(update,context):
-    if not validate_command(update):
-        sendMessage(update,context,f'Este bot no lo puedes usar')
-        return
+    '''
+    remove an element from resume    
+    command:
+    /remove a_1 [ a_2 [ a_3]]
+    remove elements a_1 a_2 a_3 from resume
+    '''
 
-    caption = update.message['text'][7:].strip()
-    items = [int(i) for i in caption.split(' ')]
-    for i in items:
-        remove_element(i)
-    sendMessage(update,context,f'Eliminado\\!')
+    elements = re.findall(r'[0-9]+', update.effective_message.text)
+    elements = list(map(int, elements))
+
+    resume_posts = get_resume_posts()
+
+    cnt = 0
+
+    for i in elements:
+        try:
+            resume_posts.pop(i-1)
+        except IndexError:
+            pass
+        else:
+            cnt += 1
+        
+    try:
+        resume = open(resume_filename,'wb')
+    except OSError:
+        raise Exception('Could not open resume file')
+    else:
+        for i in resume_posts:
+            resume.write(i[0] + b'\x00' + i[1] + b'\x01')
+        resume.close()
+
+    update.effective_chat.send_message(
+        text = f'removidos {cnt} elementos'
+    )
+    
+
+
 
 #adds elements to resume manualy
 def plus(update,context):
     '''
     El comando se usa de la siguiente manera:
-    /plus (*post_name*)[*post_link*]
+    /plus (*post_title*)[*post_link*]
     '''
-    if not validate_command(update):
-        sendMessage(update,context,f'Este bot no lo puedes usar')
-        return
 
-    caption = update.message['text'][5:].strip()
-    isIn = [False,False]
-    name,link = "",""
-    for i in caption:
-        if i == ']':
-            isIn[1] = False
-        if i == ')':
-            isIn[0] = False
-        if isIn[0]:
-            name += i
-        if isIn[1]:
-            link += i
-        if i == '(':
-            isIn[0] = True
-        if i == '[':
-            isIn[1] = True
+    match = re.match(r'/plus \(([\w\W]+)\)\[([\w\W]+)\]',update.effective_message.text)
+
+    if match is None:
+        update.effective_chat.send_message(
+            text = 'Formato incorrecto'
+        )
+        return None
+
+    if new_unprocessed_post(match.group(2), match.group(1)):
+        update.effective_chat.send_message(
+            text = 'añadido correctamente'
+        )
+
+
     
-    add_unproc_post(link=link,name=name)
-    sendMessage(update,context,"Elemento añadido a la lista de Posts disponibles")
     
     
 def edit_past_link(update,context):
@@ -393,55 +465,20 @@ def edit_past_link(update,context):
     el comando se usa de la siguiente manera:
     /pastlink (*numero_de_resumen_actual*)[*link_del_anterior_resumen*]
     '''
-    caption = update.message['text'][9:].strip()
-    isIn = [False,False]
-    number,link = "",""
-    for i in caption:
-        if i == ']':
-            isIn[1] = False
-        if i == ')':
-            isIn[0] = False
-        if isIn[0]:
-            number += i
-        if isIn[1]:
-            link += i
-        if i == '(':
-            isIn[0] = True
-        if i == '[':
-            isIn[1] = True    
-    number = int(number)
-    save_link(number-1,link)
+    match = re.match(r'/pastlink \(([\w\W]+)\)\[([\w\W]+)\]',update.message.text)
 
-def backup_resume(update,context):
-    CHAT_ID = update.message.chat.id
-    if CHAT_ID not in goat_id:
-        context.bot.send_message(chat_id = CHAT_ID,text='No puedes usar este bot')
-        return 
-
-    v = download_file(f'htdocs/goaty_robot/{resume}','rb',encoding=False)
-    if len(v.read()) > 0:
-        context.bot.send_document(
-            chat_id = CHAT_ID,
-            document = open('resume.txt','rb'),
-            filename="past.txt"
+    if match is None:
+        update.effective_chat.send_message(
+            text = 'Formato incorrecto'
         )
-    else :
-        context.bot.send_message(
-            chat_id = CHAT_ID,
-            text = 'No hay nada en el resumen.'
+        return None
+
+    if update_past_link(match.group(2), match.group(1)):
+        update.effective_chat.send_message(
+            text = 'añadido correctamente'
         )
 
-    v = download_file(f'htdocs/goaty_robot/{unprocessed}','rb',encoding=False)
-    if len(v.read()) > 0:
-        context.bot.send_document(
-            chat_id = CHAT_ID,
-            document = open(unprocessed,'rb')
-        )
-    else:
-        context.bot.send_message(
-            chat_id = CHAT_ID,
-            text = 'No hay post nuevos.'
-        )
+
 
 def error_handler(update,context):
     CHAT_ID = update.effective_chat.id
@@ -457,21 +494,20 @@ if __name__ == '__main__':
 updater = Updater(my_bot.token,use_context = True);
 dp = updater.dispatcher
 
-dp.add_handler(CommandHandler("build",build))#sends a message of available post
-dp.add_handler(CommandHandler("send",send))#sends resume to channel
-dp.add_handler(CommandHandler("show",show))#show current resume
-dp.add_handler(CommandHandler("add",add))#adds element to resume
-dp.add_handler(CommandHandler('remove',remove))#remove element from resume
-dp.add_handler(CommandHandler('plus',plus))#adds element manualy
-dp.add_handler(CommandHandler('pastlink',edit_past_link))# edit last resume link stuff
-dp.add_handler(CommandHandler('backup',backup_resume))
-dp.add_handler(MessageHandler(Filters.all,recv_msg))
-dp.add_handler(MessageHandler(Filters.photo,recv_msg))
+dp.add_handler(CommandHandler("build",build, filters= Filters.chat(chat_id = goat_id )))#sends a message of available post
+dp.add_handler(CommandHandler("send",send, filters= Filters.chat(chat_id = goat_id)))#sends resume to channel
+dp.add_handler(CommandHandler("show",show, filters= Filters.chat(chat_id = goat_id)))#show current resume
+dp.add_handler(CommandHandler("add",add, filters= Filters.chat(chat_id = goat_id)))#adds element to resume
+dp.add_handler(CommandHandler('remove',remove, filters= Filters.chat(chat_id = goat_id)))#remove element from resume
+dp.add_handler(CommandHandler('plus',plus, filters= Filters.chat(chat_id = goat_id)))#adds element manualy
+dp.add_handler(CommandHandler('pastlink',edit_past_link, filters= Filters.chat(chat_id = goat_id)))# edit last resume link stuff
+dp.add_handler(CommandHandler('help', help, filters= Filters.chat(chat_id = goat_id)))
+dp.add_handler(MessageHandler(Filters.all,process_channel_post))
+dp.add_handler(MessageHandler(Filters.photo,process_channel_post))
 dp.add_error_handler(error_handler)
 
 
+updater.start_polling()
 
-heroku_app_name = os.getenv("HEROKU_APP_NAME")
-PORT = int(os.environ.get("PORT","8443"))
-updater.start_webhook(listen="0.0.0.0",port=PORT,url_path=TOKEN,webhook_url=f"https://{heroku_app_name}.herokuapp.com/{TOKEN}")
-print(f'------BOT RUNNING ON PORT {PORT}------')
+updater.idle()
+
